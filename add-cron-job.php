@@ -381,8 +381,7 @@ function view_scheduled_emails()
                 if (strpos($schedule->subject, 'Reminder - Venue Details of ') === 0) {
                     $payload = json_decode($schedule->content, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($payload['properties']['Course_Date'])) {
-                        $new_course_date = date('Y-m-d', strtotime($new_date . ' +1 day'));
-                        $payload['properties']['Course_Date'] = format_course_date($new_course_date);
+                        $payload['properties']['Course_Date'] = format_course_date($new_date);
                         $update_data['content'] = json_encode($payload);
                     }
                 }
