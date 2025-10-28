@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Scheduled Email
  * Description: Schedules and sends emails and Omnisend events after a WooCommerce purchase, managing them via a custom database table and a single cron job.
- * Version: 2.4
+ * Version: 2.5
  * Author: Lead Academy
  */
 
