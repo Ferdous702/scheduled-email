@@ -15,6 +15,28 @@ define('PHLEBOTOMY_TRAINING_OMNISEND', [366854,354284,376417,376420,377824,40859
 
 $debug_moode_emails = false;
 
+// Function to format date like "1st November, 2025"
+function format_course_date($date_string) {
+    $timestamp = strtotime($date_string);
+    $day = date('j', $timestamp);
+    $month = date('F', $timestamp);
+    $year = date('Y', $timestamp);
+
+    // Add ordinal suffix
+    if ($day > 3 && $day < 21) {
+        $suffix = 'th';
+    } else {
+        switch ($day % 10) {
+            case 1: $suffix = 'st'; break;
+            case 2: $suffix = 'nd'; break;
+            case 3: $suffix = 'rd'; break;
+            default: $suffix = 'th'; break;
+        }
+    }
+
+    return $day . $suffix . ' ' . $month . ', ' . $year;
+}
+
 // --- Plugin Activation/Deactivation Hooks ---
 register_activation_hook(__FILE__, 'create_email_schedule_table');
 function create_email_schedule_table()
@@ -360,7 +382,7 @@ function view_scheduled_emails()
                     $payload = json_decode($schedule->content, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($payload['properties']['Course_Date'])) {
                         $new_course_date = date('Y-m-d', strtotime($new_date . ' +1 day'));
-                        $payload['properties']['Course_Date'] = $new_course_date;
+                        $payload['properties']['Course_Date'] = format_course_date($new_course_date);
                         $update_data['content'] = json_encode($payload);
                     }
                 }
