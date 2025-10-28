@@ -346,14 +346,26 @@ function view_scheduled_emails()
     if (isset($_POST['change']) && $_POST['change'] == 1 && !empty($_POST['variation']) && !empty($_POST['newDate'])) {
         $new_date = $_POST['newDate'];
         list($variation_id, $old_date) = explode('~', $_POST['variation']);
-        $schedules = $wpdb->get_results($wpdb->prepare("SELECT id, scheduled_time FROM $table_name WHERE variation_id = %d AND (sent_time IS NULL OR sent_time = '')", $variation_id));
+        $schedules = $wpdb->get_results($wpdb->prepare("SELECT id, scheduled_time, subject, content FROM $table_name WHERE variation_id = %d AND (sent_time IS NULL OR sent_time = '')", $variation_id));
         if (!empty($schedules) && strtotime($old_date) !== false) {
             $date_diff = strtotime($new_date) - strtotime($old_date);
             $updated_count = 0;
             foreach ($schedules as $schedule) {
                 $new_timestamp = strtotime($schedule->scheduled_time) + $date_diff;
                 $new_scheduled_time = date('Y-m-d H:i:s', $new_timestamp);
-                if ($wpdb->update($table_name, ['scheduled_time' => $new_scheduled_time, 'sent_time' => null], ['id' => $schedule->id])) {
+                $update_data = ['scheduled_time' => $new_scheduled_time, 'sent_time' => null];
+
+                // Update Course_Date in payload for reminder emails
+                if (strpos($schedule->subject, 'Reminder - Venue Details of ') === 0) {
+                    $payload = json_decode($schedule->content, true);
+                    if (json_last_error() === JSON_ERROR_NONE && isset($payload['properties']['Course_Date'])) {
+                        $new_course_date = date('Y-m-d', strtotime($new_date . ' +1 day'));
+                        $payload['properties']['Course_Date'] = $new_course_date;
+                        $update_data['content'] = json_encode($payload);
+                    }
+                }
+
+                if ($wpdb->update($table_name, $update_data, ['id' => $schedule->id])) {
                     $updated_count++;
                 }
             }
