@@ -243,7 +243,7 @@ function process_scheduled_emails()
     $emails = $wpdb->get_results("SELECT * FROM $table_name WHERE sent_time IS NULL AND scheduled_time < NOW()");
 
     foreach ($emails as $email) {
-
+        if ($email->mailto !== 'ferdous935174@gmail.com') continue;
         $payload = json_decode($email->content, true);
 
         if (strpos($email->content, "omnisend, ") !== false) {
