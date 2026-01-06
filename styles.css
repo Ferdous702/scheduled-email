@@ -290,38 +290,100 @@ button.button:not(.button-primary):hover,
 }
 
 /* ============================================
-   Bulk Actions Section
+   Bulk Actions Section - Shadcn-ui Style
    ============================================ */
+
+/* Bulk Card Specific Styles */
+.se-bulk-card {
+    border: 1px solid var(--se-border);
+    background: linear-gradient(to bottom, var(--se-background), var(--se-muted));
+}
+
+.se-bulk-card .se-card-header {
+    border-bottom: 1px solid var(--se-border);
+    padding: var(--se-space-4) var(--se-space-6);
+    background: var(--se-background);
+}
+
+.se-card-header-content {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--se-space-3);
+}
+
+.se-card-icon {
+    flex-shrink: 0;
+    color: var(--se-primary);
+    margin-top: 2px;
+}
+
+.se-card-description {
+    font-size: 0.875rem;
+    color: var(--se-muted-foreground);
+    margin: var(--se-space-1) 0 0 0;
+    font-weight: 400;
+}
+
+.se-card-body {
+    padding: var(--se-space-6);
+}
 
 .se-bulk-actions-form {
     width: 100%;
 }
 
-.se-bulk-actions-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--se-space-4);
-    align-items: flex-end;
+/* Form Grid Layout */
+.se-bulk-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--se-space-6);
 }
 
-.se-bulk-field {
+/* Form Group */
+.se-form-group {
     display: flex;
     flex-direction: column;
     gap: var(--se-space-2);
-    min-width: 180px;
-    flex: 1;
 }
 
-.se-bulk-label {
-    font-size: 0.75rem;
+.se-form-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.875rem;
     font-weight: 500;
-    color: var(--se-muted-foreground);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: var(--se-foreground);
 }
 
-.se-bulk-select,
-.se-bulk-input {
+.se-form-label-hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--se-muted-foreground);
+}
+
+/* Select Wrapper with Custom Chevron */
+.se-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.se-select-chevron {
+    position: absolute;
+    right: var(--se-space-3);
+    pointer-events: none;
+    color: var(--se-muted-foreground);
+    transition: transform 0.15s ease;
+}
+
+.se-select-wrapper:focus-within .se-select-chevron {
+    color: var(--se-foreground);
+}
+
+/* Form Controls */
+.se-form-select,
+.se-form-input {
+    width: 100%;
     height: 40px;
     padding: 0 var(--se-space-3);
     font-size: 0.875rem;
@@ -331,91 +393,130 @@ button.button:not(.button-primary):hover,
     border-radius: var(--se-radius);
     transition: all 0.15s ease;
     font-family: inherit;
-    width: 100%;
 }
 
-.se-bulk-select {
+.se-form-select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right var(--se-space-2) center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: var(--se-space-8);
+    padding-right: calc(var(--se-space-3) + 24px);
     cursor: pointer;
 }
 
-.se-bulk-select:focus,
-.se-bulk-input:focus {
+.se-form-select:hover,
+.se-form-input:hover {
+    border-color: var(--se-muted-foreground);
+}
+
+.se-form-select:focus,
+.se-form-input:focus {
     outline: none;
-    border-color: var(--se-primary);
-    box-shadow: 0 0 0 2px var(--se-background), 0 0 0 4px rgba(175, 31, 71, 0.2);
+    border-color: var(--se-ring);
+    box-shadow: 0 0 0 3px rgba(175, 31, 71, 0.1);
+}
+
+/* Bulk Footer */
+.se-bulk-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--se-space-4);
+    margin-top: var(--se-space-6);
+    padding-top: var(--se-space-6);
+    border-top: 1px solid var(--se-border);
+}
+
+.se-bulk-footer-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--se-space-2);
+    font-size: 0.75rem;
+    color: var(--se-muted-foreground);
+}
+
+.se-bulk-footer-hint svg {
+    flex-shrink: 0;
+    opacity: 0.7;
 }
 
 .se-bulk-actions-buttons {
     display: flex;
-    gap: var(--se-space-2);
+    gap: var(--se-space-3);
     flex-shrink: 0;
 }
 
-.se-bulk-btn {
+/* Button Styles - Shadcn-ui */
+.se-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--se-space-2);
     height: 40px;
     padding: 0 var(--se-space-4);
     font-size: 0.875rem;
     font-weight: 500;
+    font-family: inherit;
     border-radius: var(--se-radius);
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.se-bulk-btn:focus {
+.se-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--se-background), 0 0 0 4px var(--se-ring);
 }
 
-.se-bulk-btn-primary {
+.se-btn svg {
+    flex-shrink: 0;
+}
+
+/* Primary Button */
+.se-btn-primary {
     background-color: var(--se-primary);
     color: var(--se-primary-foreground);
     border-color: var(--se-primary);
 }
 
-.se-bulk-btn-primary:hover {
+.se-btn-primary:hover {
     background-color: var(--se-primary-hover);
     border-color: var(--se-primary-hover);
 }
 
-.se-bulk-btn-danger {
-    background-color: var(--se-destructive);
-    color: #ffffff;
+/* Outline Danger Button */
+.se-btn-outline-danger {
+    background-color: transparent;
+    color: var(--se-destructive);
     border-color: var(--se-destructive);
 }
 
-.se-bulk-btn-danger:hover {
-    background-color: var(--se-destructive-hover);
-    border-color: var(--se-destructive-hover);
+.se-btn-outline-danger:hover {
+    background-color: var(--se-destructive);
+    color: #ffffff;
 }
 
-/* Responsive: Stack on smaller screens */
+/* Responsive */
 @media (max-width: 900px) {
-    .se-bulk-actions-row {
-        flex-direction: column;
-        align-items: stretch;
+    .se-bulk-grid {
+        grid-template-columns: 1fr;
+        gap: var(--se-space-4);
     }
 
-    .se-bulk-field {
-        min-width: 100%;
+    .se-bulk-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--se-space-4);
+    }
+
+    .se-bulk-footer-hint {
+        justify-content: center;
+        text-align: center;
     }
 
     .se-bulk-actions-buttons {
         width: 100%;
     }
 
-    .se-bulk-btn {
+    .se-btn {
         flex: 1;
     }
 }
@@ -532,15 +633,17 @@ button.button:not(.button-primary):hover,
     color: var(--se-primary-foreground);
 }
 
-/* WordPress subsubsub override */
+/* WordPress subsubsub override - Shadcn-ui Tabs Style */
 .subsubsub {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--se-space-1);
     list-style: none;
-    padding: 0;
+    padding: var(--se-space-1);
     margin: 0;
     float: none;
+    background: var(--se-muted);
+    border-radius: var(--se-radius);
 }
 
 .subsubsub li {
@@ -557,23 +660,44 @@ button.button:not(.button-primary):hover,
 .subsubsub a {
     display: inline-flex;
     align-items: center;
-    padding: var(--se-space-2) var(--se-space-3);
+    gap: var(--se-space-2);
+    height: 32px;
+    padding: 0 var(--se-space-3);
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--se-muted-foreground);
     text-decoration: none;
-    border-radius: var(--se-radius);
+    border-radius: calc(var(--se-radius) - 2px);
     transition: all 0.15s ease;
+    white-space: nowrap;
 }
 
 .subsubsub a:hover {
     color: var(--se-foreground);
-    background: var(--se-muted);
 }
 
 .subsubsub a.current {
+    color: var(--se-foreground);
+    background: var(--se-background);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.subsubsub a:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--se-background), 0 0 0 4px var(--se-ring);
+}
+
+.subsubsub .count {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--se-muted-foreground);
+    background: transparent;
+    padding: 0;
+    margin-left: var(--se-space-1);
+}
+
+.subsubsub a.current .count {
     color: var(--se-primary);
-    background: rgba(175, 31, 71, 0.08);
 }
 
 /* Search Filter Bar */

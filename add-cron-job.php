@@ -423,54 +423,89 @@ function view_scheduled_emails()
     echo "<div class='wrap se-admin-wrap'><h1>Scheduled Emails &amp; Events</h1>";
 ?>
     <!-- Bulk Actions Card -->
-    <div class="se-card">
+    <div class="se-card se-bulk-card">
         <div class="se-card-header">
-            <h3 class="se-card-title">Bulk Actions</h3>
-        </div>
-        <form method="post" class="se-bulk-actions-form">
-            <div class="se-bulk-actions-row">
-                <div class="se-bulk-field">
-                    <label class="se-bulk-label" for="course">Product</label>
-                    <select name="product" id="course" class="se-bulk-select">
-                        <option value="">-- Select Product --</option>
-                        <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
-                            $product = wc_get_product($id);
-                            if (!$product) continue;
-                            $selected = (isset($_POST['product']) && $id == $_POST['product']) ? 'selected' : '';
-                            echo "<option {$selected} value='{$id}'>{$id} ~ {$product->get_name()}</option>";
-                        endforeach; ?>
-                    </select>
-                </div>
-                <div class="se-bulk-field">
-                    <label class="se-bulk-label" for="date">Variation Date</label>
-                    <select name="variation" id="date" class="se-bulk-select">
-                        <option>-- Select Date --</option>
-                        <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
-                            $meta_id = ($id == 366854) ? 354284 : $id;
-                            $meta_group = get_post_meta($meta_id, 'la_phleb_course_meta_group', true);
-                            $product = wc_get_product($id);
-                            if (!$product || !is_array($meta_group)) continue;
-                            usort($meta_group, fn($a, $b) => strtotime($a['adv_course_date'] ?? 0) - strtotime($b['adv_course_date'] ?? 0));
-                            foreach ($meta_group as $variation):
-                                if (empty($variation['la_phleb_course_var_id'])) continue;
-                                $val = $variation['la_phleb_course_var_id'] . '~' . $variation['adv_course_date'];
-                                $is_selected_product = isset($_POST['product']) && $_POST['product'] == $id;
-                                $display = $is_selected_product ? '' : 'style="display:none;"';
-                                echo "<option {$display} data-course='{$id}' value='{$val}'>{$val}</option>";
-                            endforeach;
-                        endforeach; ?>
-                    </select>
-                </div>
-                <div class="se-bulk-field">
-                    <label class="se-bulk-label" for="newDate">New Date</label>
-                    <input type="date" name="newDate" id="newDate" class="se-bulk-input" />
-                </div>
-                <div class="se-bulk-actions-buttons">
-                    <button name="delete" value="1" class="se-bulk-btn se-bulk-btn-danger" type="submit" onclick="return confirm('Are you sure you want to delete all emails for this variation?')">Delete All</button>
-                    <button name="change" value="1" class="se-bulk-btn se-bulk-btn-primary" type="submit" onclick="return confirm('Are you sure you want to change dates?')">Change Date</button>
+            <div class="se-card-header-content">
+                <svg class="se-card-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg>
+                <div>
+                    <h3 class="se-card-title">Bulk Actions</h3>
+                    <p class="se-card-description">Manage multiple scheduled emails at once</p>
                 </div>
             </div>
-        </form>
+        </div>
+        <div class="se-card-body">
+            <form method="post" class="se-bulk-actions-form">
+                <div class="se-bulk-grid">
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="course">
+                            Product
+                            <span class="se-form-label-hint">Select a course</span>
+                        </label>
+                        <div class="se-select-wrapper">
+                            <select name="product" id="course" class="se-form-select">
+                                <option value="">Select product...</option>
+                                <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
+                                    $product = wc_get_product($id);
+                                    if (!$product) continue;
+                                    $selected = (isset($_POST['product']) && $id == $_POST['product']) ? 'selected' : '';
+                                    echo "<option {$selected} value='{$id}'>{$id} ~ {$product->get_name()}</option>";
+                                endforeach; ?>
+                            </select>
+                            <svg class="se-select-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="date">
+                            Variation Date
+                            <span class="se-form-label-hint">Current date to modify</span>
+                        </label>
+                        <div class="se-select-wrapper">
+                            <select name="variation" id="date" class="se-form-select">
+                                <option>Select variation...</option>
+                                <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
+                                    $meta_id = ($id == 366854) ? 354284 : $id;
+                                    $meta_group = get_post_meta($meta_id, 'la_phleb_course_meta_group', true);
+                                    $product = wc_get_product($id);
+                                    if (!$product || !is_array($meta_group)) continue;
+                                    usort($meta_group, fn($a, $b) => strtotime($a['adv_course_date'] ?? 0) - strtotime($b['adv_course_date'] ?? 0));
+                                    foreach ($meta_group as $variation):
+                                        if (empty($variation['la_phleb_course_var_id'])) continue;
+                                        $val = $variation['la_phleb_course_var_id'] . '~' . $variation['adv_course_date'];
+                                        $is_selected_product = isset($_POST['product']) && $_POST['product'] == $id;
+                                        $display = $is_selected_product ? '' : 'style="display:none;"';
+                                        echo "<option {$display} data-course='{$id}' value='{$val}'>{$val}</option>";
+                                    endforeach;
+                                endforeach; ?>
+                            </select>
+                            <svg class="se-select-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="se-form-group">
+                        <label class="se-form-label" for="newDate">
+                            New Date
+                            <span class="se-form-label-hint">Target date</span>
+                        </label>
+                        <input type="date" name="newDate" id="newDate" class="se-form-input" />
+                    </div>
+                </div>
+                <div class="se-bulk-footer">
+                    <div class="se-bulk-footer-hint">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        <span>Actions will apply to all emails matching the selected variation</span>
+                    </div>
+                    <div class="se-bulk-actions-buttons">
+                        <button name="delete" value="1" class="se-btn se-btn-outline-danger" type="submit" onclick="return confirm('Are you sure you want to delete all emails for this variation?')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            Delete All
+                        </button>
+                        <button name="change" value="1" class="se-btn se-btn-primary" type="submit" onclick="return confirm('Are you sure you want to change dates?')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                            Change Date
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
 <?php
