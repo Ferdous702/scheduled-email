@@ -26,67 +26,79 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Create modal container
             const modal = document.createElement("div");
-            modal.classList.add("edit-modal");
+            modal.classList.add("se-modal-overlay");
 
             let editorHtml;
+            let usesTinyMCE = false;
+            const editorId = 'se-tinymce-editor-' + Date.now();
 
             if (name === 'scheduled_time') {
                 // For date editing, provide a datetime-local input
                 const formattedDate = content.replace(' ', 'T').substring(0, 16);
-                editorHtml = `<input type="datetime-local" id="modal-input" value="${formattedDate}" style="width: 100%; padding: 8px;">`;
+                editorHtml = `
+                    <div class="se-form-group">
+                        <label class="se-label">Date & Time</label>
+                        <input type="datetime-local" id="modal-input" value="${formattedDate}">
+                    </div>`;
             } else {
-                // For other fields, use the existing rich/text editor
+                usesTinyMCE = true;
+                // For other fields, use TinyMCE editor
                 const subjectInput = name === 'edit_content' ?
-                    `<input style="width:100%;" type="text" id="email-subject" value="${subject}"/>` :
+                    `<div class="se-form-group">
+                        <label class="se-label">Subject</label>
+                        <input type="text" id="email-subject" value="${subject}"/>
+                    </div>` :
                     '';
                 editorHtml = `
                     ${subjectInput}
-                    <button id="toggle-mode">Switch to Text View</button>
-                    <textarea id="modal-input-text" class="edit-textarea" style="display:none;">${content}</textarea>
-                    <div id="html-editor" contenteditable="true" class="edit-html-view">${content}</div>
+                    <div class="se-form-group">
+                        <label class="se-label">Content</label>
+                        <textarea id="${editorId}" class="se-tinymce-textarea">${content}</textarea>
+                    </div>
                 `;
             }
 
             const fieldName = name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             modal.innerHTML = `
-                <div class="edit-modal-content">
-                    <h2>Edit ${fieldName}</h2>
-                    ${editorHtml}
-                    <div class="modal-actions">
-                        <button id="save-btn">Save</button>
-                        <button id="cancel-btn">Cancel</button>
+                <div class="se-modal">
+                    <div class="se-modal-header">
+                        <h2>Edit ${fieldName}</h2>
+                    </div>
+                    <div class="se-modal-body">
+                        ${editorHtml}
+                    </div>
+                    <div class="se-modal-footer">
+                        <button id="cancel-btn" class="se-btn-secondary">Cancel</button>
+                        <button id="save-btn" class="se-btn-primary">Save Changes</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
 
-            // Setup event listeners only if the text/html editor exists
-            if (name !== 'scheduled_time') {
-                const textArea = document.getElementById("modal-input-text");
-                const htmlEditor = document.getElementById("html-editor");
-                const toggleBtn = document.getElementById("toggle-mode");
-
-                textArea.style.display = "none";
-                htmlEditor.style.display = "block";
-                toggleBtn.textContent = "Switch to Text View";
-
-                toggleBtn.addEventListener("click", function () {
-                    const isHtmlMode = textArea.style.display === 'none';
-                    if (isHtmlMode) {
-                        htmlEditor.style.display = "none";
-                        textArea.style.display = "block";
-                        textArea.value = htmlEditor.innerHTML;
-                        toggleBtn.textContent = "Switch to HTML View";
-                    } else {
-                        textArea.style.display = "none";
-                        htmlEditor.style.display = "block";
-                        htmlEditor.innerHTML = textArea.value;
-                        toggleBtn.textContent = "Switch to Text View";
-                    }
+            // Initialize TinyMCE if this modal uses it
+            if (usesTinyMCE && typeof wp !== 'undefined' && wp.editor) {
+                wp.editor.initialize(editorId, {
+                    tinymce: {
+                        wpautop: true,
+                        plugins: 'charmap colorpicker hr lists paste tabfocus textcolor wordpress wpautoresize wpdialogs wpeditimage wpemoji wpgallery wplink wptextpattern',
+                        toolbar1: 'formatselect bold italic underline | bullist numlist | blockquote | alignleft aligncenter alignright | link unlink | wp_adv',
+                        toolbar2: 'strikethrough hr forecolor | pastetext removeformat | charmap | outdent indent | undo redo | wp_help',
+                        height: 300,
+                        menubar: false,
+                        relative_urls: false,
+                        remove_script_host: false,
+                        convert_urls: false
+                    },
+                    quicktags: true,
+                    mediaButtons: true
                 });
             }
 
             function closeModal() {
+                // Destroy TinyMCE instance before removing modal
+                if (usesTinyMCE && typeof wp !== 'undefined' && wp.editor) {
+                    wp.editor.remove(editorId);
+                }
                 document.body.removeChild(modal);
             }
 
@@ -104,9 +116,16 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (name === 'edit_content') {
                         emailSubject = document.getElementById("email-subject").value;
                     }
-                    const textArea = document.getElementById("modal-input-text");
-                    const isHtmlMode = textArea.style.display === 'none';
-                    newValue = isHtmlMode ? document.getElementById("html-editor").innerHTML : textArea.value;
+                    // Get content from TinyMCE
+                    if (usesTinyMCE && typeof wp !== 'undefined' && wp.editor) {
+                        // Sync the visual editor content to textarea
+                        if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                            tinymce.get(editorId).save();
+                        }
+                        newValue = document.getElementById(editorId).value;
+                    } else {
+                        newValue = document.getElementById(editorId).value;
+                    }
                 }
                 
                 if (newValue === content) {
@@ -218,19 +237,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function replaceContentModal() {
         var modal = document.createElement("div");
-        modal.classList.add("custom-modal");
+        modal.classList.add("se-modal-overlay");
         modal.innerHTML = `
-        <div class="custom-modal-content">
-            <h2>Replace Content</h2>
-            <div id="query-error" class="error-message"></div>
-            <input type="text" id="query" placeholder="Order / Product / Variation">
-            <div id="content-find-error" class="error-message"></div>
-            <textarea id="modal-input-find" placeholder="Find Content"></textarea>
-            <div id="content-replace-error" class="error-message"></div>
-            <textarea id="modal-input-replace" placeholder="Replace Content"></textarea>
-            <div class="modal-actions">
-                <button id="save-btn">Submit</button>
-                <button id="cancel-btn">Cancel</button>
+        <div class="se-modal">
+            <div class="se-modal-header">
+                <h2>Replace Content</h2>
+            </div>
+            <div class="se-modal-body">
+                <div class="se-form-group">
+                    <label class="se-label">Order / Product / Variation ID</label>
+                    <div id="query-error" class="error-message"></div>
+                    <input type="text" id="query" placeholder="Enter ID to filter by...">
+                </div>
+                <div class="se-form-group">
+                    <label class="se-label">Find Content</label>
+                    <div id="content-find-error" class="error-message"></div>
+                    <textarea id="modal-input-find" placeholder="Text to find..."></textarea>
+                </div>
+                <div class="se-form-group">
+                    <label class="se-label">Replace With</label>
+                    <div id="content-replace-error" class="error-message"></div>
+                    <textarea id="modal-input-replace" placeholder="Replacement text..."></textarea>
+                </div>
+            </div>
+            <div class="se-modal-footer">
+                <button id="cancel-btn" class="se-btn-secondary">Cancel</button>
+                <button id="save-btn" class="se-btn-primary">Replace</button>
             </div>
         </div>
     `;
@@ -304,15 +336,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function addByOrderIdModal() {
         var modal = document.createElement("div");
-        modal.classList.add("custom-modal");
+        modal.classList.add("se-modal-overlay");
         modal.innerHTML = `
-        <div class="custom-modal-content">
-            <h2>Add Email by Order ID</h2>
-            <input type="text" id="order_id" placeholder="Order ID"/>
-            <div id="error-message" class="error-message"></div>
-            <div class="modal-actions">
-                <button id="save-btn">Submit</button>
-                <button id="cancel-btn">Cancel</button>
+        <div class="se-modal" style="max-width: 400px;">
+            <div class="se-modal-header">
+                <h2>Add Email by Order ID</h2>
+            </div>
+            <div class="se-modal-body">
+                <div class="se-form-group">
+                    <label class="se-label">Order ID</label>
+                    <input type="text" id="order_id" placeholder="Enter order ID..."/>
+                    <div id="error-message" class="error-message"></div>
+                </div>
+            </div>
+            <div class="se-modal-footer">
+                <button id="cancel-btn" class="se-btn-secondary">Cancel</button>
+                <button id="save-btn" class="se-btn-primary">Add Emails</button>
             </div>
         </div>`;
         document.body.appendChild(modal);
@@ -358,59 +397,87 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function openModal() {
         var modal = document.createElement("div");
-        modal.classList.add("custom-modal");
+        modal.classList.add("se-modal-overlay");
+        var newEmailEditorId = 'se-new-email-editor-' + Date.now();
         modal.innerHTML = `
-        <div class="custom-modal-content">
-            <h2>New Email</h2>
-            <div id="email-error" class="error-message"></div>
-            <input type="email" id="email" placeholder="Email">
-            <div id="subject-error" class="error-message"></div>
-            <input type="text" id="subject" placeholder="Subject">
-            <div id="content-error" class="error-message"></div>
-            <div id="sent-time-error" class="error-message"></div>
-            <input type="datetime-local" id="sent_time">
-            <button id="toggle-mode">Switch to Text View</button>
-            <textarea id="modal-input" class="edit-textarea"></textarea>
-            <div id="html-editor" contenteditable="true" class="edit-html-view"></div>
-            <input type="text" id="order_id" placeholder="Order ID">
-            <input type="text" id="product_id" placeholder="Product ID">
-            <input type="text" id="variation_id" placeholder="Variation ID">
-            <div class="modal-actions">
-                <button id="save-btn">Submit</button>
-                <button id="cancel-btn">Cancel</button>
+        <div class="se-modal" style="max-width: 700px;">
+            <div class="se-modal-header">
+                <h2>Create New Email</h2>
+            </div>
+            <div class="se-modal-body">
+                <div class="se-form-group">
+                    <label class="se-label">Email Address *</label>
+                    <input type="email" id="email" placeholder="recipient@example.com">
+                    <div id="email-error" class="error-message"></div>
+                </div>
+                <div class="se-form-group">
+                    <label class="se-label">Subject *</label>
+                    <input type="text" id="subject" placeholder="Email subject...">
+                    <div id="subject-error" class="error-message"></div>
+                </div>
+                <div class="se-form-group">
+                    <label class="se-label">Scheduled Time *</label>
+                    <input type="datetime-local" id="sent_time">
+                    <div id="sent-time-error" class="error-message"></div>
+                </div>
+                <div class="se-form-group">
+                    <label class="se-label">Content</label>
+                    <textarea id="${newEmailEditorId}" class="se-tinymce-textarea"></textarea>
+                    <div id="content-error" class="error-message"></div>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <div class="se-form-group" style="flex: 1;">
+                        <label class="se-label">Order ID</label>
+                        <input type="text" id="order_id" placeholder="Optional">
+                    </div>
+                    <div class="se-form-group" style="flex: 1;">
+                        <label class="se-label">Product ID</label>
+                        <input type="text" id="product_id" placeholder="Optional">
+                    </div>
+                    <div class="se-form-group" style="flex: 1;">
+                        <label class="se-label">Variation ID</label>
+                        <input type="text" id="variation_id" placeholder="Optional">
+                    </div>
+                </div>
+            </div>
+            <div class="se-modal-footer">
+                <button id="cancel-btn" class="se-btn-secondary">Cancel</button>
+                <button id="save-btn" class="se-btn-primary">Create Email</button>
             </div>
         </div>
     `;
         document.body.appendChild(modal);
-        var textArea = document.getElementById("modal-input");
-        var htmlEditor = document.getElementById("html-editor");
-        var toggleBtn = document.getElementById("toggle-mode");
-        textArea.style.display = "none";
-        htmlEditor.style.display = "block";
-        toggleBtn.textContent = "Switch to Text View";
-        var isHtmlMode = true;
-        toggleBtn.addEventListener("click", function () {
-            isHtmlMode = !isHtmlMode;
-            if (isHtmlMode) {
-                textArea.style.display = "none";
-                htmlEditor.style.display = "block";
-                htmlEditor.innerHTML = textArea.value;
-                toggleBtn.textContent = "Switch to Text View";
-            } else {
-                htmlEditor.style.display = "none";
-                textArea.style.display = "block";
-                textArea.value = htmlEditor.innerHTML;
-                toggleBtn.textContent = "Switch to HTML View";
-            }
-        });
+
+        // Initialize TinyMCE for new email content
+        if (typeof wp !== 'undefined' && wp.editor) {
+            wp.editor.initialize(newEmailEditorId, {
+                tinymce: {
+                    wpautop: true,
+                    plugins: 'charmap colorpicker hr lists paste tabfocus textcolor wordpress wpautoresize wpdialogs wpeditimage wpemoji wpgallery wplink wptextpattern',
+                    toolbar1: 'formatselect bold italic underline | bullist numlist | blockquote | alignleft aligncenter alignright | link unlink | wp_adv',
+                    toolbar2: 'strikethrough hr forecolor | pastetext removeformat | charmap | outdent indent | undo redo | wp_help',
+                    height: 300,
+                    menubar: false,
+                    relative_urls: false,
+                    remove_script_host: false,
+                    convert_urls: false
+                },
+                quicktags: true,
+                mediaButtons: true
+            });
+        }
 
         function closeModalAddEmail() {
+            // Destroy TinyMCE instance before removing modal
+            if (typeof wp !== 'undefined' && wp.editor) {
+                wp.editor.remove(newEmailEditorId);
+            }
             document.body.removeChild(modal);
         }
         document.getElementById("save-btn").addEventListener("click", function () {
             var subject = document.getElementById("subject");
             var email = document.getElementById("email");
-            var content = document.getElementById("modal-input");
+            var contentTextarea = document.getElementById(newEmailEditorId);
             var sentTime = document.getElementById("sent_time");
             var emailError = document.getElementById("email-error");
             var subjectError = document.getElementById("subject-error");
@@ -419,7 +486,6 @@ document.addEventListener("DOMContentLoaded", function () {
             let isValid = true;
             email.classList.remove("error");
             subject.classList.remove("error");
-            content.classList.remove("error");
             sentTime.classList.remove("error");
             emailError.textContent = "";
             subjectError.textContent = "";
@@ -435,18 +501,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 subjectError.textContent = "Subject is required.";
                 isValid = false;
             }
-            if (content.value.trim() === "" && isHtmlMode == false) {
-                content.classList.add("error");
-                contentError.textContent = "Content is required.";
-                isValid = false;
-            }
             if (sentTime.value.trim() === "") {
                 sentTime.classList.add("error");
                 sentTimeError.textContent = "Datetime is required.";
                 isValid = false;
             }
             if (!isValid) return;
-            var newValue = isHtmlMode ? htmlEditor.innerHTML : textArea.value;
+
+            // Get content from TinyMCE
+            var newValue = '';
+            if (typeof wp !== 'undefined' && wp.editor && typeof tinymce !== 'undefined' && tinymce.get(newEmailEditorId)) {
+                tinymce.get(newEmailEditorId).save();
+                newValue = contentTextarea.value;
+            } else {
+                newValue = contentTextarea.value;
+            }
+
             var formData = {
                 subject: subject.value,
                 content: newValue,

@@ -278,7 +278,7 @@ function process_scheduled_emails()
             ];
             $response = wp_remote_post("https://api.omnisend.com/v5/events", [
                 'headers' => [
-                    'X-API-KEY' => '644a6c6f71a2f8c907940b48-ZPvXST3Zm2mzhZ5hnUqnBLZJOPRegnEqWuJTCd7J4SuvJhKrQF',
+                    'X-API-KEY' => '',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode($data),
@@ -297,7 +297,7 @@ function process_scheduled_emails()
             ];
             $response = wp_remote_post("https://api.omnisend.com/v5/events", [
                 'headers' => [
-                    'X-API-KEY' => '644a6c6f71a2f8c907940b48-ZPvXST3Zm2mzhZ5hnUqnBLZJOPRegnEqWuJTCd7J4SuvJhKrQF',
+                    'X-API-KEY' => '',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode($data),
@@ -337,7 +337,11 @@ add_filter('set-screen-option', function ($status, $option, $value) {
 add_action('admin_enqueue_scripts', function () {
     $screen = get_current_screen();
     if ($screen && $screen->id === 'toplevel_page_scheduled-emails') {
-        wp_enqueue_script('scheduled-emails-js', plugin_dir_url(__FILE__) . 'scripts.js', ['jquery'], time(), true);
+        // Enqueue WP Editor (TinyMCE) scripts
+        wp_enqueue_editor();
+        wp_enqueue_media();
+
+        wp_enqueue_script('scheduled-emails-js', plugin_dir_url(__FILE__) . 'scripts.js', ['jquery', 'wp-editor'], time(), true);
         wp_enqueue_style('scheduled-emails-styles', plugins_url('styles.css', __FILE__), '', time());
         wp_localize_script('scheduled-emails-js', 'scheduledAjax', ['ajaxUrl' => admin_url('admin-ajax.php'), 'nonce' => wp_create_nonce('update_content_nonce')]);
     }
@@ -416,45 +420,59 @@ function view_scheduled_emails()
     $emails = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name $where_sql ORDER BY scheduled_time ASC LIMIT %d OFFSET %d", $per_page, $offset));
     $pagination_links = paginate_links(['base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $current_page, 'total' => ceil($total_items / $per_page), 'prev_text' => '&laquo;', 'next_text' => '&raquo;']);
 
-    echo "<div class='wrap'><h1>Scheduled Emails & Events</h1>";
+    echo "<div class='wrap se-admin-wrap'><h1>Scheduled Emails &amp; Events</h1>";
 ?>
-    <form method="post" style="display:flex; flex-wrap: wrap; margin-bottom: 1em;">
-        <div style="padding:5px;">
-            <select name="product" id="course">
-                <option value="">--Select Product--</option>
-                <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
-                    $product = wc_get_product($id);
-                    if (!$product) continue;
-                    $selected = (isset($_POST['product']) && $id == $_POST['product']) ? 'selected' : '';
-                    echo "<option {$selected} value='{$id}'>{$id}~{$product->get_name()}</option>";
-                endforeach; ?>
-            </select>
+    <!-- Bulk Actions Card -->
+    <div class="se-card">
+        <div class="se-card-header">
+            <h3 class="se-card-title">Bulk Actions</h3>
         </div>
-        <div style="padding:5px;">
-            <select name="variation" id="date">
-                <option>--Select Date--</option>
-                <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
-                    $meta_id = ($id == 366854) ? 354284 : $id;
-                    $meta_group = get_post_meta($meta_id, 'la_phleb_course_meta_group', true);
-                    $product = wc_get_product($id);
-                    if (!$product || !is_array($meta_group)) continue;
-                    usort($meta_group, fn($a, $b) => strtotime($a['adv_course_date'] ?? 0) - strtotime($b['adv_course_date'] ?? 0));
-                    foreach ($meta_group as $variation):
-                        if (empty($variation['la_phleb_course_var_id'])) continue;
-                        $val = $variation['la_phleb_course_var_id'] . '~' . $variation['adv_course_date'];
-                        $is_selected_product = isset($_POST['product']) && $_POST['product'] == $id;
-                        $display = $is_selected_product ? '' : 'style="display:none;"';
-                        echo "<option {$display} data-course='{$id}' value='{$val}'>{$val}</option>";
-                    endforeach;
-                endforeach; ?>
-            </select>
-        </div>
-        <div style="padding:5px;">
-            <button name="delete" value="1" class="button button-primary" type="submit" onclick="return confirm('Are you sure?')">Delete</button>
-            <input type="date" name="newDate" />
-            <button name="change" value="1" class="button button-primary" type="submit" onclick="return confirm('Are you sure?')">Change</button>
-        </div>
-    </form>
+        <form method="post" class="se-bulk-actions-form">
+            <div class="se-bulk-actions-row">
+                <div class="se-bulk-field">
+                    <label class="se-bulk-label" for="course">Product</label>
+                    <select name="product" id="course" class="se-bulk-select">
+                        <option value="">-- Select Product --</option>
+                        <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
+                            $product = wc_get_product($id);
+                            if (!$product) continue;
+                            $selected = (isset($_POST['product']) && $id == $_POST['product']) ? 'selected' : '';
+                            echo "<option {$selected} value='{$id}'>{$id} ~ {$product->get_name()}</option>";
+                        endforeach; ?>
+                    </select>
+                </div>
+                <div class="se-bulk-field">
+                    <label class="se-bulk-label" for="date">Variation Date</label>
+                    <select name="variation" id="date" class="se-bulk-select">
+                        <option>-- Select Date --</option>
+                        <?php foreach (FACE_2_FACE_PRODUCT_CODES_OMNISEND as $id):
+                            $meta_id = ($id == 366854) ? 354284 : $id;
+                            $meta_group = get_post_meta($meta_id, 'la_phleb_course_meta_group', true);
+                            $product = wc_get_product($id);
+                            if (!$product || !is_array($meta_group)) continue;
+                            usort($meta_group, fn($a, $b) => strtotime($a['adv_course_date'] ?? 0) - strtotime($b['adv_course_date'] ?? 0));
+                            foreach ($meta_group as $variation):
+                                if (empty($variation['la_phleb_course_var_id'])) continue;
+                                $val = $variation['la_phleb_course_var_id'] . '~' . $variation['adv_course_date'];
+                                $is_selected_product = isset($_POST['product']) && $_POST['product'] == $id;
+                                $display = $is_selected_product ? '' : 'style="display:none;"';
+                                echo "<option {$display} data-course='{$id}' value='{$val}'>{$val}</option>";
+                            endforeach;
+                        endforeach; ?>
+                    </select>
+                </div>
+                <div class="se-bulk-field">
+                    <label class="se-bulk-label" for="newDate">New Date</label>
+                    <input type="date" name="newDate" id="newDate" class="se-bulk-input" />
+                </div>
+                <div class="se-bulk-actions-buttons">
+                    <button name="delete" value="1" class="se-bulk-btn se-bulk-btn-danger" type="submit" onclick="return confirm('Are you sure you want to delete all emails for this variation?')">Delete All</button>
+                    <button name="change" value="1" class="se-bulk-btn se-bulk-btn-primary" type="submit" onclick="return confirm('Are you sure you want to change dates?')">Change Date</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
 <?php
     echo '<div class="search-filter">';
     echo '<ul class="subsubsub">';
@@ -479,37 +497,53 @@ function view_scheduled_emails()
         }
         $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE $count_where");
         $class = ($filter_query === $status) ? 'class="current"' : '';
-        echo "<li><a href='" . esc_url(add_query_arg('r', $status)) . "' $class>$label ($count)</a></li> | ";
+        echo "<li><a href='" . esc_url(add_query_arg('r', $status)) . "' $class>$label <span class='se-tab-count'>$count</span></a></li>";
     }
     echo '</ul>';
-    echo '<button type="submit" id="replaceContent" class="button button-primary">Replace</button>';
-    echo '<button type="submit" id="addByOrderId" class="button button-primary">+OrderID</button>';
-    echo '<button type="submit" id="openModalBtn" class="button button-primary">Add</button>';
-    echo '<form method="GET" style="display:inline-block; margin-left:1em;"><input type="hidden" name="page" value="scheduled-emails" /><input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search..." /><button type="submit" class="button">Search</button></form>';
+    echo '<div class="se-actions-right">';
+    echo '<button type="submit" id="replaceContent" class="button button-primary">Replace Content</button>';
+    echo '<button type="submit" id="addByOrderId" class="button button-primary">+ Order ID</button>';
+    echo '<button type="submit" id="openModalBtn" class="button button-primary">+ New Email</button>';
+    echo '<form method="GET" class="se-flex se-gap-2"><input type="hidden" name="page" value="scheduled-emails" /><input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search emails..." style="width:200px;" /><button type="submit" class="button">Search</button></form>';
+    echo '</div>';
     echo '</div>';
 
-    echo "<table class='wp-list-table widefat fixed striped'><thead><tr><th>ID</th><th>Email</th><th style='width:40%;'>Msg/Payload</th><th style='padding: 4px 2px;'>Scheduled For</th><th style='padding: 4px 2px;'>Order</th><th style='padding: 4px 2px;'>Product</th><th style='padding: 4px 2px;'>Variation</th><th style='padding: 4px 2px;'>Status</th><th style='padding: 4px 2px;'>Action</th></tr></thead><tbody>";
+    echo "<table class='wp-list-table widefat fixed striped se-table'><thead><tr><th>ID</th><th>Email</th><th style='width:35%;'>Subject / Content</th><th>Scheduled For</th><th>Order</th><th>Product</th><th>Variation</th><th>Status</th><th>Action</th></tr></thead><tbody>";
     if ($emails) {
         foreach ($emails as $email) {
             $escaped_content = esc_attr(htmlspecialchars($email->content, ENT_QUOTES, 'UTF-8'));
             $subject_display = esc_html($email->subject);
             if (strpos($email->subject, 'Reminder - Venue Details of ') === 0) {
-                $subject_display = '<span style="color: red;">' . $subject_display . '</span>';
+                $subject_display = '<span class="se-text-primary se-font-medium">' . $subject_display . '</span>';
             }
+            // Truncate content for display
+            $content_preview = mb_strlen($email->content) > 80 ? mb_substr($email->content, 0, 80) . '...' : $email->content;
+            $content_preview = esc_html($content_preview);
+
+            // Status badge
+            $status_badge = '';
+            if ($email->sent_time === null) {
+                $status_badge = '<span class="se-badge se-badge-pending">Scheduled</span>';
+            } elseif ($email->sent_time === 'Deleted' || $email->sent_time === 'Bin') {
+                $status_badge = '<span class="se-badge se-badge-deleted">' . esc_html($email->sent_time) . '</span>';
+            } else {
+                $status_badge = '<span class="se-badge se-badge-sent">Sent</span>';
+            }
+
             echo "<tr>
-                <td>{$email->id}</td>
+                <td class='se-text-muted'>{$email->id}</td>
                 <td class='editable' data-name='mailto' data-id='{$email->id}'>{$email->mailto}</td>
-                <td class='editable' data-subject='{$email->subject}' data-content='{$escaped_content}' data-name='edit_content' data-id='{$email->id}' style='width:40%;'>{$subject_display}<br>{$email->content}</td>
-                <td class='editable' data-name='scheduled_time' data-id='{$email->id}' style='padding: 4px 2px;'>{$email->scheduled_time}</td>
-                <td style='padding: 4px 2px;'><a href='/wp-admin/post.php?post={$email->order_id}&action=edit'>{$email->order_id}</a></td>
-                <td style='padding: 4px 2px;'>{$email->product_id}</td>
-                <td style='padding: 4px 2px;'>{$email->variation_id}</td>
-                <td style='padding: 4px 2px;'>{$email->sent_time}</td>
-                <td style='padding: 4px 2px;'><a href='" . esc_url(add_query_arg('delete_email', $email->id)) . "' class='button button-small' onclick='return confirm(\"Move this to Deleted?\")'>🗑️</a></td>
+                <td class='editable' data-subject='{$email->subject}' data-content='{$escaped_content}' data-name='edit_content' data-id='{$email->id}'><strong>{$subject_display}</strong><br><span class='se-text-muted se-text-sm'>{$content_preview}</span></td>
+                <td class='editable' data-name='scheduled_time' data-id='{$email->id}'>{$email->scheduled_time}</td>
+                <td><a href='/wp-admin/post.php?post={$email->order_id}&action=edit' class='se-text-primary'>{$email->order_id}</a></td>
+                <td class='se-text-muted'>{$email->product_id}</td>
+                <td class='se-text-muted'>{$email->variation_id}</td>
+                <td>{$status_badge}</td>
+                <td><a href='" . esc_url(add_query_arg('delete_email', $email->id)) . "' class='button button-small' onclick='return confirm(\"Move this to Deleted?\")'>Delete</a></td>
             </tr>";
         }
     } else {
-        echo "<tr><td colspan='8'>No items found.</td></tr>";
+        echo "<tr><td colspan='9' class='not-found'>No scheduled emails found.</td></tr>";
     }
     echo "</tbody></table>";
 
@@ -589,6 +623,7 @@ function handle_update_email_content()
     $id = absint($_POST['id']);
     $name_info = sanitize_text_field($_POST['name_info']);
     $content = stripslashes($_POST['content']);
+    $subject_info = isset($_POST['subject_info']) ? stripslashes($_POST['subject_info']) : '';
     if (!$id) wp_send_json_error(['message' => 'Invalid ID.']);
 
     $update_data = [];
@@ -602,7 +637,7 @@ function handle_update_email_content()
 			wp_send_json_error(['message' => 'Invalid date format.']);
 		}
     } elseif ($name_info === 'edit_content') {
-        $update_data = ['content' => $content, 'subject' => sanitize_text_field($_POST['subject_info'])];
+        $update_data = ['content' => $content, 'subject' => sanitize_text_field($subject_info)];
         $format = ['%s', '%s'];
     } elseif ($name_info === 'mailto') {
         if (is_email($content)) {
@@ -613,7 +648,7 @@ function handle_update_email_content()
 
     if (!empty($update_data) && $wpdb->update($table_name, $update_data, ['id' => $id], $format, ['%d']) !== false) {
         if ($name_info === 'edit_content') {
-            $content_preview = sanitize_text_field($_POST['subject_info']) . '<br>' . wp_kses_post($content);
+            $content_preview = sanitize_text_field($subject_info) . '<br>' . wp_kses_post($content);
             wp_send_json_success(['message' => 'Update successful.', 'content_preview' => $content_preview]);
         } else {
             wp_send_json_success(['message' => 'Update successful.']);
