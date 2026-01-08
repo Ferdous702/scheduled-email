@@ -488,10 +488,10 @@ function view_scheduled_emails()
     <div class="se-card se-bulk-card">
         <div class="se-card-header">
             <div class="se-card-header-content">
-                <svg class="se-card-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg>
-                <div class="se-card-header-content">
+                <svg class="se-card-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <div class="se-card-header-info">
                     <h3 class="se-card-title">Bulk Actions</h3>
-                    <p class="se-card-description">Manage multiple scheduled emails</p>
+                    <p class="se-card-description">Manage multiple scheduled emails in one go</p>
                 </div>
             </div>
         </div>

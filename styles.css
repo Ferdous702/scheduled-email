@@ -215,24 +215,38 @@
 /* Compact Header for Bulk Cards */
 .se-bulk-card .se-card-header-content {
     display: flex;
-    align-items: baseline;
-    gap: var(--se-space-2);
+    align-items: flex-start;
+    gap: var(--se-space-3);
 }
 
 .se-bulk-card .se-card-icon {
-    width: 16px;
-    height: 16px;
-    margin-top: 1px;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    color: var(--se-primary);
+    filter: drop-shadow(0 0 8px rgba(175, 31, 71, 0.2));
+}
+
+.se-bulk-card .se-card-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .se-bulk-card .se-card-title {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--se-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
 }
 
 .se-bulk-card .se-card-description {
     font-size: 0.75rem;
+    color: var(--se-muted-foreground);
     margin: 0;
-    opacity: 0.8;
+    font-weight: 450;
 }
 
 /* ============================================
@@ -428,15 +442,30 @@ button.button:not(.button-primary):hover,
 /* Bulk Card Specific Styles */
 .se-bulk-card {
     border: 1px solid var(--se-border);
-    background: linear-gradient(to bottom, var(--se-background), var(--se-muted));
-    padding: var(--se-space-3);
-    /* Reduced footprint */
+    background: linear-gradient(135deg, var(--se-background) 0%, var(--se-muted) 100%);
+    padding: var(--se-space-5);
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.se-bulk-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--se-primary);
+    opacity: 0.8;
 }
 
 .se-bulk-card .se-card-header {
     border-bottom: 1px solid var(--se-border);
-    padding: 0 0 var(--se-space-2) 0;
-    margin-bottom: var(--se-space-3);
+    padding: 0 0 var(--se-space-4) 0;
+    margin-bottom: var(--se-space-5);
     background: transparent;
 }
 
@@ -471,7 +500,8 @@ button.button:not(.button-primary):hover,
 .se-bulk-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--se-space-4);
+    gap: var(--se-space-6);
+    /* Increased gap for better breathing room */
 }
 
 /* Form Group */
@@ -484,17 +514,21 @@ button.button:not(.button-primary):hover,
 .se-form-label {
     display: flex;
     flex-direction: row;
-    gap: var(--se-space-1);
-    align-items: baseline;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--se-foreground);
+    gap: var(--se-space-2);
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--se-muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 2px;
 }
 
 .se-form-label-hint {
     font-size: 10px;
     font-weight: 400;
     color: var(--se-muted-foreground);
+    opacity: 0.6;
 }
 
 /* Select Wrapper with Custom Chevron */
@@ -550,8 +584,8 @@ button.button:not(.button-primary):hover,
 .se-form-select:focus,
 .se-form-input:focus {
     outline: none;
-    border-color: var(--se-ring);
-    box-shadow: 0 0 0 3px rgba(175, 31, 71, 0.1);
+    border-color: var(--se-primary);
+    box-shadow: 0 0 0 4px rgba(175, 31, 71, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Bulk Footer */
@@ -580,7 +614,7 @@ button.button:not(.button-primary):hover,
 
 .se-bulk-actions-buttons {
     display: flex;
-    gap: var(--se-space-2);
+    gap: var(--se-space-3);
     flex-shrink: 0;
 }
 
@@ -600,16 +634,20 @@ button.button:not(.button-primary):hover,
     align-items: center;
     justify-content: center;
     gap: var(--se-space-2);
-    height: 34px;
-    padding: 0 var(--se-space-4);
+    height: 38px;
+    padding: 0 var(--se-space-5);
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     font-family: inherit;
     border-radius: var(--se-radius);
     border: 1px solid transparent;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+}
+
+.se-btn:active {
+    transform: scale(0.98);
 }
 
 .se-btn:focus-visible {
