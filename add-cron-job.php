@@ -417,7 +417,7 @@ function view_scheduled_emails()
     }
     $where_sql = 'WHERE ' . implode(' AND ', $where_conditions);
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name $where_sql");
-    $emails = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name $where_sql ORDER BY scheduled_time ASC LIMIT %d OFFSET %d", $per_page, $offset));
+    $emails = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name $where_sql ORDER BY id DESC LIMIT %d OFFSET %d", $per_page, $offset));
     $pagination_links = paginate_links(['base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $current_page, 'total' => ceil($total_items / $per_page), 'prev_text' => '&laquo;', 'next_text' => '&raquo;']);
 
     echo "<div class='wrap se-admin-wrap'><h1>Scheduled Emails &amp; Events</h1>";
@@ -539,7 +539,11 @@ function view_scheduled_emails()
     echo '<button type="submit" id="replaceContent" class="button button-primary">Replace Content</button>';
     echo '<button type="submit" id="addByOrderId" class="button button-primary">+ Order ID</button>';
     echo '<button type="submit" id="openModalBtn" class="button button-primary">+ New Email</button>';
-    echo '<form method="GET" class="se-flex se-gap-2"><input type="hidden" name="page" value="scheduled-emails" /><input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search emails..." style="width:200px;" /><button type="submit" class="button">Search</button></form>';
+    echo '<form method="GET" class="se-flex se-gap-2"><input type="hidden" name="page" value="scheduled-emails" />';
+    if (!empty($filter_query)) {
+        echo '<input type="hidden" name="r" value="' . esc_attr($filter_query) . '" />';
+    }
+    echo '<input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search emails..." style="width:200px;" /><button type="submit" class="button">Search</button></form>';
     echo '</div>';
     echo '</div>';
 
