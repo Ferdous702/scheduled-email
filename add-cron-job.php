@@ -720,6 +720,7 @@ function display_scheduled_emails($order_id)
     echo '<div class="scheduled-emails-section">';
     echo '<h2>Your Scheduled Emails</h2>';
     echo '<p>Here is a list of emails scheduled for you based on your recent purchase:</p>';
+    echo '<div class="se-table-container">';
     echo '<table class="scheduled-emails-table">';
     echo '<thead><tr><th>Subject</th><th>Scheduled Send Date</th><th>Status</th></tr></thead>';
     echo '<tbody>';
@@ -734,6 +735,6 @@ function display_scheduled_emails($order_id)
         echo '</tr>';
     }
 
-    echo '</tbody></table>';
+    echo '</tbody></table></div>';
     echo '</div>';
 }

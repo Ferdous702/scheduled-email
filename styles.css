@@ -1719,3 +1719,102 @@ td span[style*="color: red"] {
 .se-table-container::-webkit-scrollbar-thumb:hover {
     background: var(--se-muted-foreground);
 }
+
+/* ============================================
+   Enhanced Responsiveness & Mobile Polish
+   ============================================ */
+
+/* Global Mobile Wrap Fix */
+@media (max-width: 782px) {
+    .wrap {
+        margin-right: 12px !important;
+    }
+}
+
+/* Filter Bar Responsive Stacking */
+@media (max-width: 1100px) {
+    .search-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .se-actions-right {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: var(--se-space-2);
+        margin-top: var(--se-space-3);
+    }
+
+    .se-actions-right form {
+        width: 100%;
+        margin-top: var(--se-space-2);
+    }
+
+    .se-actions-right input[type="text"] {
+        flex: 1;
+        width: auto !important;
+    }
+}
+
+/* Status Tabs (subsubsub) Wrapping */
+.subsubsub {
+    flex-wrap: wrap !important;
+    line-height: 2 !important;
+}
+
+@media (max-width: 600px) {
+    .se-actions-right .button {
+        flex: 1 1 calc(50% - var(--se-space-2));
+    }
+}
+
+/* Pagination Wrapping */
+.pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+@media (max-width: 600px) {
+    .custom-pagination {
+        flex-direction: column;
+        gap: var(--se-space-3);
+        text-align: center;
+    }
+}
+
+/* Modal Responsiveness */
+@media (max-width: 768px) {
+
+    .se-modal,
+    .custom-modal-content,
+    .edit-modal-content {
+        max-width: 95% !important;
+        max-height: 90vh !important;
+    }
+
+    .se-modal-header,
+    .se-modal-body,
+    .se-modal-footer,
+    .modal-actions {
+        padding: var(--se-space-4) !important;
+    }
+
+    .custom-modal input,
+    .custom-modal textarea,
+    .custom-modal select,
+    .edit-modal input,
+    .edit-modal textarea,
+    .edit-modal select {
+        width: calc(100% - var(--se-space-4) * 2) !important;
+        margin: 0 var(--se-space-4) var(--se-space-4) !important;
+    }
+}
+
+/* Fix for TinyMCE in Small Modals */
+@media (max-width: 480px) {
+    .mce-toolbar-grp .mce-container-body {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+}
