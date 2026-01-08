@@ -499,7 +499,7 @@ function view_scheduled_emails()
                             Delete All
                         </button>
                         <button name="change" value="1" class="se-btn se-btn-primary" type="submit" onclick="return confirm('Are you sure you want to change dates?')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
                             Change Date
                         </button>
                     </div>
@@ -509,15 +509,14 @@ function view_scheduled_emails()
     </div>
 
 <?php
-    echo '<div class="search-filter">';
-    echo '<ul class="subsubsub">';
-    // Use tokens that match how rows are stored and filtered
+    echo '<div class="se-toolbar">';
+    echo '<ul class="se-segmented-control">';
     $statuses = [
         'All' => '',
-        'Sent' => 'sent',           // sent_time IS NOT NULL AND NOT in Bin/Deleted
-        'Scheduled' => 'schedule',   // sent_time IS NULL
-        'Deleted' => 'Deleted',      // exact text stored in sent_time
-        'Bin' => 'Bin'               // exact text stored in sent_time
+        'Sent' => 'sent',
+        'Scheduled' => 'schedule',
+        'Deleted' => 'Deleted',
+        'Bin' => 'Bin'
     ];
     foreach ($statuses as $label => $status) {
         if ($status === '') {
@@ -527,7 +526,6 @@ function view_scheduled_emails()
         } elseif ($status === 'schedule') {
             $count_where = "(sent_time IS NULL)";
         } else {
-            // 'Deleted' or 'Bin' exact match
             $count_where = $wpdb->prepare("sent_time = %s", $status);
         }
         $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE $count_where");
@@ -535,15 +533,22 @@ function view_scheduled_emails()
         echo "<li><a href='" . esc_url(add_query_arg('r', $status)) . "' $class>$label <span class='se-tab-count'>$count</span></a></li>";
     }
     echo '</ul>';
-    echo '<div class="se-actions-right">';
-    echo '<button type="submit" id="replaceContent" class="button button-primary">Replace Content</button>';
-    echo '<button type="submit" id="addByOrderId" class="button button-primary">+ Order ID</button>';
-    echo '<button type="submit" id="openModalBtn" class="button button-primary">+ New Email</button>';
-    echo '<form method="GET" class="se-flex se-gap-2"><input type="hidden" name="page" value="scheduled-emails" />';
+
+    echo '<div class="se-toolbar-actions">';
+    echo '<div class="se-action-buttons">';
+    echo '<button type="submit" id="replaceContent" class="se-btn se-btn-secondary">Replace Content</button>';
+    echo '<button type="submit" id="addByOrderId" class="se-btn se-btn-secondary">+ Order ID</button>';
+    echo '<button type="submit" id="openModalBtn" class="se-btn se-btn-primary">+ New Email</button>';
+    echo '</div>';
+
+    echo '<form method="GET" class="se-search-container">';
+    echo '<input type="hidden" name="page" value="scheduled-emails" />';
     if (!empty($filter_query)) {
         echo '<input type="hidden" name="r" value="' . esc_attr($filter_query) . '" />';
     }
-    echo '<input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search emails..." style="width:200px;" /><button type="submit" class="button">Search</button></form>';
+    echo '<input type="text" name="s" value="' . esc_attr($search_query) . '" placeholder="Search emails..." />';
+    echo '<button type="submit" class="se-btn se-search-btn">Search</button>';
+    echo '</form>';
     echo '</div>';
     echo '</div>';
 
@@ -556,9 +561,33 @@ function view_scheduled_emails()
             if (strpos($email->subject, 'Reminder - Venue Details of ') === 0) {
                 $subject_display = '<span class="se-text-primary se-font-medium">' . $subject_display . '</span>';
             }
-            // Truncate content for display
-            $content_preview = mb_strlen($email->content) > 80 ? mb_substr($email->content, 0, 80) . '...' : $email->content;
-            $content_preview = esc_html($content_preview);
+            // Enhanced content preview logic
+            $is_json = false;
+            $decoded = json_decode($email->content, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $is_json = true;
+            }
+
+            if ($is_json) {
+                $event_name = $decoded['eventName'] ?? 'Unknown Event';
+                $content_preview = '<div class="se-event-preview">';
+                $content_preview .= '<span class="se-badge se-badge-event" style="margin-bottom:4px;">' . esc_html($event_name) . '</span>';
+                if (!empty($decoded['properties'])) {
+                    $props = $decoded['properties'];
+                    $prop_summary = [];
+                    foreach (array_slice($props, 0, 3) as $k => $v) {
+                        $val = is_array($v) ? json_encode($v) : $v;
+                        if (mb_strlen($val) > 25) $val = mb_substr($val, 0, 25) . '...';
+                        $prop_summary[] = '<span class="se-event-prop"><b>' . esc_html($k) . '</b> ' . esc_html($val) . '</span>';
+                    }
+                    if (count($props) > 3) $prop_summary[] = '<span class="se-text-xs se-text-muted">+' . (count($props) - 3) . ' more</span>';
+                    $content_preview .= '<div style="display:flex; flex-wrap:wrap; gap:4px;">' . implode('', $prop_summary) . '</div>';
+                }
+                $content_preview .= '</div>';
+            } else {
+                // HTML content - render it safely but limited
+                $content_preview = '<div class="se-content-preview">' . wp_kses_post($email->content) . '</div>';
+            }
 
             // Status badge
             $status_badge = '';
@@ -577,7 +606,7 @@ function view_scheduled_emails()
             echo "<tr>
                 <td class='se-text-muted'>{$email->id}</td>
                 <td class='editable' data-name='mailto' data-id='{$email->id}'>{$email->mailto}</td>
-                <td class='editable' data-subject='{$email->subject}' data-content='{$escaped_content}' data-name='edit_content' data-id='{$email->id}'><strong>{$subject_display}</strong><br><span class='se-text-muted se-text-sm'>{$content_preview}</span></td>
+                <td class='editable' data-subject='{$email->subject}' data-content='{$escaped_content}' data-name='edit_content' data-id='{$email->id}'><strong>{$subject_display}</strong>{$content_preview}</td>
                 <td class='editable' data-name='scheduled_time' data-id='{$email->id}'>{$email->scheduled_time}</td>
                 <td><a href='/wp-admin/post.php?post={$email->order_id}&action=edit' class='se-text-primary'>{$email->order_id}</a></td>
                 <td class='se-text-muted'>{$email->product_id}</td>
