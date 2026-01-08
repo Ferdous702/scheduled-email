@@ -562,7 +562,11 @@ function view_scheduled_emails()
             } elseif ($email->sent_time === 'Deleted' || $email->sent_time === 'Bin') {
                 $status_badge = '<span class="se-badge se-badge-deleted">' . esc_html($email->sent_time) . '</span>';
             } else {
-                $status_badge = '<span class="se-badge se-badge-sent">Sent</span>';
+                $sent_timestamp = strtotime($email->sent_time);
+                $is_today = date('Y-m-d', $sent_timestamp) === current_time('Y-m-d');
+                $format = $is_today ? 'g:i A' : 'M j, g:i A';
+                $sent_time_formatted = date($format, $sent_timestamp);
+                $status_badge = '<span class="se-badge se-badge-sent">Sent ' . $sent_time_formatted . '</span>';
             }
 
             echo "<tr>
