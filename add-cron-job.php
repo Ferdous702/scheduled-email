@@ -421,15 +421,77 @@ function view_scheduled_emails()
     $pagination_links = paginate_links(['base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $current_page, 'total' => ceil($total_items / $per_page), 'prev_text' => '&laquo;', 'next_text' => '&raquo;']);
 
     echo "<div class='wrap se-admin-wrap'><h1>Scheduled Emails &amp; Events</h1>";
+    
+    // Calculate Stats
+    $total_scheduled = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE sent_time IS NULL");
+    $sent_24h = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE sent_time IS NOT NULL AND sent_time NOT IN ('Bin', 'Deleted') AND sent_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)");
+    $upcoming_today = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE sent_time IS NULL AND DATE(scheduled_time) = CURDATE()");
+    $unique_customers = $wpdb->get_var("SELECT COUNT(DISTINCT mailto) FROM $table_name");
 ?>
+    <!-- Stat Cards Section -->
+    <div class="se-stats-grid">
+        <div class="se-stat-card">
+            <div class="se-stat-header">
+                <span class="se-stat-label">Total Scheduled</span>
+                <div class="se-stat-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+                </div>
+            </div>
+            <div class="se-stat-value"><?php echo number_format($total_scheduled); ?></div>
+            <div class="se-stat-footer">
+                <span class="se-stat-description">Emails waiting in queue</span>
+            </div>
+        </div>
+
+        <div class="se-stat-card">
+            <div class="se-stat-header">
+                <span class="se-stat-label">Sent (24h)</span>
+                <div class="se-stat-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </div>
+            </div>
+            <div class="se-stat-value"><?php echo number_format($sent_24h); ?></div>
+            <div class="se-stat-footer">
+                <span class="se-stat-trend se-stat-trend-up">↑ Active</span>
+                <span class="se-stat-description">Successfully delivered</span>
+            </div>
+        </div>
+
+        <div class="se-stat-card">
+            <div class="se-stat-header">
+                <span class="se-stat-label">Upcoming Today</span>
+                <div class="se-stat-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+            </div>
+            <div class="se-stat-value"><?php echo number_format($upcoming_today); ?></div>
+            <div class="se-stat-footer">
+                <span class="se-stat-description">Scheduled for today</span>
+            </div>
+        </div>
+
+        <div class="se-stat-card">
+            <div class="se-stat-header">
+                <span class="se-stat-label">Total Reach</span>
+                <div class="se-stat-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+            </div>
+            <div class="se-stat-value"><?php echo number_format($unique_customers); ?></div>
+            <div class="se-stat-footer">
+                <span class="se-stat-description">Unique email recipients</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Bulk Actions Card -->
     <div class="se-card se-bulk-card">
         <div class="se-card-header">
             <div class="se-card-header-content">
                 <svg class="se-card-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg>
-                <div>
+                <div class="se-card-header-content">
                     <h3 class="se-card-title">Bulk Actions</h3>
-                    <p class="se-card-description">Manage multiple scheduled emails at once</p>
+                    <p class="se-card-description">Manage multiple scheduled emails</p>
                 </div>
             </div>
         </div>
@@ -439,7 +501,7 @@ function view_scheduled_emails()
                     <div class="se-form-group">
                         <label class="se-form-label" for="course">
                             Product
-                            <span class="se-form-label-hint">Select a course</span>
+                            <span class="se-form-label-hint">• Select product</span>
                         </label>
                         <div class="se-select-wrapper">
                             <select name="product" id="course" class="se-form-select">
@@ -457,7 +519,7 @@ function view_scheduled_emails()
                     <div class="se-form-group">
                         <label class="se-form-label" for="date">
                             Variation Date
-                            <span class="se-form-label-hint">Current date to modify</span>
+                            <span class="se-form-label-hint">• Current date</span>
                         </label>
                         <div class="se-select-wrapper">
                             <select name="variation" id="date" class="se-form-select">
@@ -483,7 +545,7 @@ function view_scheduled_emails()
                     <div class="se-form-group">
                         <label class="se-form-label" for="newDate">
                             New Date
-                            <span class="se-form-label-hint">Target date</span>
+                            <span class="se-form-label-hint">• Target date</span>
                         </label>
                         <input type="date" name="newDate" id="newDate" class="se-form-input" />
                     </div>
