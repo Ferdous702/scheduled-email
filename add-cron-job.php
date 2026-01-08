@@ -543,7 +543,8 @@ function view_scheduled_emails()
     echo '</div>';
     echo '</div>';
 
-    echo "<table class='wp-list-table widefat fixed striped se-table'><thead><tr><th>ID</th><th>Email</th><th style='width:35%;'>Subject / Content</th><th>Scheduled For</th><th>Order</th><th>Product</th><th>Variation</th><th>Status</th><th>Action</th></tr></thead><tbody>";
+    echo '<div class="se-table-container">';
+    echo "<table class='wp-list-table widefat striped se-table'><thead><tr><th>ID</th><th>Email</th><th style='width:35%;'>Subject / Content</th><th>Scheduled For</th><th>Order</th><th>Product</th><th>Variation</th><th>Status</th><th>Action</th></tr></thead><tbody>";
     if ($emails) {
         foreach ($emails as $email) {
             $escaped_content = esc_attr(htmlspecialchars($email->content, ENT_QUOTES, 'UTF-8'));
@@ -584,7 +585,7 @@ function view_scheduled_emails()
     } else {
         echo "<tr><td colspan='9' class='not-found'>No scheduled emails found.</td></tr>";
     }
-    echo "</tbody></table>";
+    echo "</tbody></table></div>";
 
     if ($pagination_links) {
         echo "<div class='custom-pagination'>";
