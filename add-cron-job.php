@@ -278,7 +278,7 @@ function process_scheduled_emails()
             ];
             $response = wp_remote_post("https://api.omnisend.com/v5/events", [
                 'headers' => [
-                    'X-API-KEY' => '',
+                    'X-API-KEY' => '644a6c6f71a2f8c907940b48-ZPvXST3Zm2mzhZ5hnUqnBLZJOPRegnEqWuJTCd7J4SuvJhKrQF',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode($data),
@@ -297,7 +297,7 @@ function process_scheduled_emails()
             ];
             $response = wp_remote_post("https://api.omnisend.com/v5/events", [
                 'headers' => [
-                    'X-API-KEY' => '',
+                    'X-API-KEY' => '644a6c6f71a2f8c907940b48-ZPvXST3Zm2mzhZ5hnUqnBLZJOPRegnEqWuJTCd7J4SuvJhKrQF',
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode($data),
