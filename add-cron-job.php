@@ -310,7 +310,7 @@ function process_scheduled_emails()
             }
         } else {
             $headers = ['Content-Type: text/html; charset=UTF-8'];
-            if (wp_mail($email->mailto, $email->subject, $email->content, $headers)) {
+            if (wp_mail($email->mailto, $email->subject, wpautop($email->content), $headers)) {
                 $wpdb->update($table_name, ['sent_time' => current_time('mysql')], ['id' => $email->id]);
             }
         }
@@ -648,7 +648,7 @@ function view_scheduled_emails()
                 $content_preview .= '</div>';
             } else {
                 // HTML content - render it safely but limited
-                $content_preview = '<div class="se-content-preview">' . wp_kses_post($email->content) . '</div>';
+                $content_preview = '<div class="se-content-preview">' . wp_kses_post(wpautop($email->content)) . '</div>';
             }
 
             // Status badge
@@ -783,7 +783,7 @@ function handle_update_email_content()
 
     if (!empty($update_data) && $wpdb->update($table_name, $update_data, ['id' => $id], $format, ['%d']) !== false) {
         if ($name_info === 'edit_content') {
-            $content_preview = sanitize_text_field($subject_info) . '<br>' . wp_kses_post($content);
+            $content_preview = sanitize_text_field($subject_info) . '<br>' . wp_kses_post(wpautop($content));
             wp_send_json_success(['message' => 'Update successful.', 'content_preview' => $content_preview]);
         } else {
             wp_send_json_success(['message' => 'Update successful.']);
